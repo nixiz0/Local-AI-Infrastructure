@@ -1,10 +1,6 @@
 # **Local AI Infrastructure Kit**
 
-**OpenWebUI Account Creation:**
-
-Username = user777     
-Email = user@openwebui.com   
-Password = 1234   
+Innovative and powerful local AI infrastructure available offline without connection, independent, combining different innovative projects such as **OpenWebUI** for the application/Interface, **Ollama** for the server and local AI models and **Qdrant** for the powerful vector database.
 
 ---
 
@@ -25,6 +21,14 @@ Password = 1234
 ---
 
 ## **Configuration**
+
+**Default Account Creation:**
+
+Username = user777     
+Email = user@openwebui.com   
+Password = 1234   
+
+**Default Advanced Configuration:**
 
 Go on *admin panel* and go on *settings*
 
