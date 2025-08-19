@@ -59,3 +59,9 @@ To make sure you are using the latest versions of all images (for example, if an
   ```
 
 This will download only the images that have changed, and keep unchanged images as is.
+
+---
+
+## Author
+
+- [@nixiz0](https://github.com/nixiz0)
