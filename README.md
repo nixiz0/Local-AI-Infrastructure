@@ -6,6 +6,8 @@ Innovative and powerful local AI infrastructure available offline without connec
 
 ## **Start the Stack**
 
+Before starting the Stack, go to **config folder** and the **.env** file and config the *ports* you want and *[Ollama models you want to use](https://ollama.com/search)*
+
 => Click on **start.bat** if you are on Windows OR use the **start.sh** if you are on Mac / Linux
 
 => Or if you want to use docker commands :   
