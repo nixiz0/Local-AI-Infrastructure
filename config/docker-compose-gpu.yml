@@ -1,0 +1,115 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.13.5-gpu-nvidia
+    # restart: always
+    container_name: qdrant
+    networks:
+      - local_ai_infra_network
+    ports: ["6333:6333","6334:6334"]
+    volumes: ["qdrant-data:/qdrant/storage"]
+    environment:
+      - QDRANT__GPU__INDEXING=1   # enables GPU indexing
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  ollama:
+    build:
+      context: ./ollama
+      args:
+        MODELS: ${OLLAMA_MODELS}
+    image: ollama-preloaded:latest
+    # restart: always
+    container_name: ollama
+    networks:
+      - local_ai_infra_network
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    environment:
+        - OLLAMA_HOST=0.0.0.0:11434
+
+        # Optional: Keep loaded models in memory longer
+        - OLLAMA_KEEP_ALIVE=-1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:cuda
+    # restart: always
+    container_name: openwebui
+    depends_on: [ollama, qdrant]
+    networks:
+      - local_ai_infra_network
+    ports: ["3000:8080"]
+    volumes: ["owui-data:/app/backend/data"]
+    environment:
+      # LLM & embeddings
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - RAG_EMBEDDING_ENGINE=ollama
+      - RAG_EMBEDDING_MODEL=nomic-embed-text
+
+      # === Reranking (Hugging Face local) ===
+      # IMPORTANT: this is a "PersistentConfig" — the 1st value is saved on the DB side.
+      # You can override it in the UI or by temporarily disabling persistence.
+      - RAG_RERANKING_MODEL=${RAG_RERANKING_MODEL:-jinaai/jina-reranker-v2-base-multilingual}
+
+      # Jina requires trust_remote_code=True
+      - RAG_RERANKING_MODEL_TRUST_REMOTE_CODE=true
+
+      # PERSISTED cache locations in the owui-data volume
+      - SENTENCE_TRANSFORMERS_HOME=/app/backend/data/cache/embedding/models
+      - HF_HOME=/app/backend/data/cache/hf
+      - HF_HUB_CACHE=/app/backend/data/cache/hf/hub
+      - TRANSFORMERS_CACHE=/app/backend/data/cache/hf/transformers
+
+      # Accelerating downloads (optional)
+      - HF_HUB_ENABLE_HF_TRANSFER=1
+
+      # Vector DB
+      - VECTOR_DB=qdrant
+      - QDRANT_URI=http://qdrant:6333
+      - QDRANT_PREFER_GRPC=true
+      - QDRANT_GRPC_PORT=6334
+      - ENABLE_QDRANT_MULTITENANCY_MODE=true
+
+      # Hybrid search (enables re-ranking in the Docs UI)
+      - ENABLE_RAG_HYBRID_SEARCH=true
+
+      # WebUI side GPU (embeddings/whisper)
+      - USE_CUDA_DOCKER=true
+
+      # Voice (all in Open WebUI)
+      - WHISPER_MODEL=large-v3
+      - WHISPER_VAD_FILTER=true
+      - WHISPER_LANGUAGE=fr
+
+      # Permissions (just in case)
+      - USER_PERMISSIONS_CHAT_STT=true
+      - USER_PERMISSIONS_CHAT_TTS=true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  qdrant-data: {}
+  ollama: {}
+  owui-data: {}
+
+networks:
+  local_ai_infra_network:
+    driver: bridge
