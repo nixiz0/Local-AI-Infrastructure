@@ -10,6 +10,9 @@ Password = 1234
 
 ## **Start the Stack**
 
+=> Click on **start.bat** if you are on Windows OR use the **start.sh** if you are on Mac / Linux
+
+=> Or if you want to use docker commands :   
 - **With GPU**:
   ```bash
   docker-compose -f docker-compose-gpu.yml -p <stack_name> up -d
